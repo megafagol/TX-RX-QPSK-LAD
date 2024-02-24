@@ -17,11 +17,11 @@ for i in range(len(data)):
 data = np.array([1., 0., 0., 1., 1., 1., 1., 1., 0., 1., 1., 1., 0., 1., 1., 1., 1., 1., 0., 0., 1., 1., 0., 0., 1., 1., 0., 0., 1., 1., 0., 1., 0., 0., 1., 1., 0., 1., 1., 1., 1., 1., 1., 0., 0., 0., 0., 0., 1., 0.])
 
 # Plot de los bits a transmitir
-fig, ax1 = plt.subplots()
-ax1.stem(range(len(data)), data,use_line_collection=True)
-ax1.grid()
-ax1.set_xlabel('data')
-ax1.set_ylabel('amplitude')
+fig, bits_t = plt.subplots()
+bits_t.stem(range(len(data)), data,use_line_collection=True)
+bits_t.grid()
+bits_t.set_xlabel('data')
+bits_t.set_ylabel('amplitude')
 plt.title('Data before Transmiting')
 plt.figure(1)
 
@@ -97,34 +97,34 @@ Tx_sig=y
 tt = np.arange(T/99, (T*len(data))/2 + T/99, T/99)
 
 
-fig, axs = plt.subplots(4, 1, figsize=(10, 8))
+fig, wave_t = plt.subplots(4, 1, figsize=(10, 8))
 # Subtrama 1: Señal de Inphase component
-axs[0].plot(tt, y_in)
-axs[0].set_title('wave form for inphase component in QPSK modulation')
-axs[0].set_xlabel('time(sec)')
-axs[0].set_ylabel('amplitude(volt0)')
-axs[0].grid(True)
+wave_t[0].plot(tt, y_in)
+wave_t[0].set_title('wave form for inphase component in QPSK modulation')
+wave_t[0].set_xlabel('time(sec)')
+wave_t[0].set_ylabel('amplitude(volt0)')
+wave_t[0].grid(True)
 
 # Subtrama 2: Señal de Quadrature component
-axs[1].plot(tt, y_qd)
-axs[1].set_title('wave form for Quadrature component in QPSK modulation')
-axs[1].set_xlabel('time(sec)')
-axs[1].set_ylabel('amplitude(volt0)')
-axs[1].grid(True)
+wave_t[1].plot(tt, y_qd)
+wave_t[1].set_title('wave form for Quadrature component in QPSK modulation')
+wave_t[1].set_xlabel('time(sec)')
+wave_t[1].set_ylabel('amplitude(volt0)')
+wave_t[1].grid(True)
 
 # Subtrama 3: Señal de ruido
-axs[2].plot(y_noise)
-axs[2].set_title('wave form for noise component in QPSK modulation')
-axs[2].set_xlabel('time(sec)')
-axs[2].set_ylabel('amplitude(volt0)')
-axs[2].grid(True)
+wave_t[2].plot(y_noise)
+wave_t[2].set_title('wave form for noise component in QPSK modulation')
+wave_t[2].set_xlabel('time(sec)')
+wave_t[2].set_ylabel('amplitude(volt0)')
+wave_t[2].grid(True)
 
 # Subtrama 4: Señal final a transmitir
-axs[3].plot(tt, Tx_sig, color='red')
-axs[3].set_title('QPSK modulated signal (sum of inphase and Quadrature phase signal and noise)')
-axs[3].set_xlabel('time(sec)')
-axs[3].set_ylabel('amplitude(volt0)')
-axs[3].grid(True)
+wave_t[3].plot(tt, Tx_sig, color='red')
+wave_t[3].set_title('QPSK modulated signal (sum of inphase and Quadrature phase signal and noise)')
+wave_t[3].set_xlabel('time(sec)')
+wave_t[3].set_ylabel('amplitude(volt0)')
+wave_t[3].grid(True)
 
 # Ajustar diseño
 plt.tight_layout()
@@ -151,16 +151,17 @@ var_len_input = 1238
 # Valores de abscisas para la transformada de Fourier
 F = np.arange(0, var_len_input)
 
-plt.figure(3)
 
 #Calculo de la transformada de Fourier de la señal recibida
 aux_noise = fourier.fft(final_signal_with_noise)
 fourier_signal_whit_noise = abs(aux_noise)
-plt.plot(F, fourier_signal_whit_noise[:var_len_input])
-plt.xlabel('Frecuencia (Hz)[Señal con ruido]', fontsize='14')
-plt.ylabel('Amplitud FFT ', fontsize='14')
+fig, fft_r = plt.subplots()
+fft_r.plot(F, fourier_signal_whit_noise[:var_len_input])
+fft_r.set_xlabel('Frecuencia (Hz)[Señal con ruido]', fontsize='14')
+fft_r.set_ylabel('Amplitud FFT ', fontsize='14')
+plt.title('Transformada de Fourier de la señal recibida')
+plt.figure(3)
 
-plt.figure(4)
 
 ## Inicio de algoritmo LAD
 
@@ -178,10 +179,13 @@ for i in range(0,len(arreglo1)):
 # Ordenamos las muestras de manera creciente según su energia.
 sorted_array = sorted(arreglofinal, key=lambda x: x[0])
 
-plt.plot(index, [x[0] for x in sorted_array])
-plt.yscale('log')
-plt.xlabel('Espectro ordenado de manera creciente', fontsize='8')
-plt.ylabel('Energia de la señal recibida', fontsize='14')
+fig, energy_s = plt.subplots()
+energy_s.plot(index, [x[0] for x in sorted_array])
+energy_s.set_yscale('log')
+energy_s.set_xlabel('Espectro ordenado de manera creciente', fontsize='8')
+energy_s.set_ylabel('Energia de la señal recibida', fontsize='14')
+plt.title('Energia ordenada de manera creciente')
+plt.figure(4)
 
 # Inicio de las iteraciones para encontrar umbrales
 # En principio la elección de la pfa dependerá de que tan seguro quieras que sea la deteccion o decisión de 
@@ -276,19 +280,17 @@ print(tu)
 print("Umbral inferior:")
 print(tl)
 
-
+fig, energy_s_t = plt.subplots()
+energy_s_t.plot(index, [x[0] for x in sorted_array])
+energy_s_t.axhline(y=tu, color='red', linestyle='--',linewidth=0.5)
+energy_s_t.axhline(y=tl, color='green', linestyle='--',linewidth=0.5)
+energy_s_t.set_yscale('log')
+energy_s_t.set_xlabel('Espectro ordenado de manera creciente', fontsize='8')
+energy_s_t.set_ylabel('Energia de la señal recibida', fontsize='14')
+plt.title('Energia ordenada de manera creciente con umbrales')
 plt.figure(5)
 
 
-plt.plot(index, [x[0] for x in sorted_array])
-plt.axhline(y=tu, color='red', linestyle='--',linewidth=0.5)
-plt.axhline(y=tl, color='green', linestyle='--',linewidth=0.5)
-plt.yscale('log')
-plt.xlabel('Espectro ordenado de manera creciente', fontsize='8')
-plt.ylabel('Energia de la señal recibida', fontsize='14')
-
-
-plt.figure(6)
 
 # Del arreglo de muestras ordenado de manera creciente segun su energía, solo consideramos
 # aquellos cuya energía es mayor al umbral inferior
@@ -301,12 +303,15 @@ muestras_finales = [tuple_item for tuple_item in muestras_finales_aux if tu <= t
 index_final_with_signal = [tuple_item[1] for tuple_item in muestras_finales]
 
 # Considerando la transformada de fourirer de la señal CON RUIDO
-plt.plot(F, fourier_signal_whit_noise[:var_len_input])
+fig, fft_r_lad = plt.subplots()
+fft_r_lad.plot(F, fourier_signal_whit_noise[:var_len_input])
 
 for index in range(0,len(index_final_with_signal)):
-  plt.scatter(index_final_with_signal[index], 400, color='red', marker='o')
-plt.xlabel('Frecuencia (Hz)', fontsize='14')
-plt.ylabel('Amplitud FFT', fontsize='14')
+  fft_r_lad.scatter(index_final_with_signal[index], 400, color='red', marker='o')
+fft_r_lad.set_xlabel('Frecuencia (Hz)', fontsize='14')
+fft_r_lad.set_ylabel('Amplitud FFT', fontsize='14')
+plt.title('Transformada de Fourier de la señal recibida mas metodo LAD')
+plt.figure(6)
 
 print('Cantidad de puntos rojos: ')
 print(len(index_final_with_signal))
@@ -362,11 +367,11 @@ for i in range(len(Rx_data)):
     if data[i] != Rx_data[i]:
         cnt += 1
 
-fig, ax2 = plt.subplots()
-ax2.stem(range(len(Rx_data)), Rx_data,use_line_collection=True)
-ax2.grid()
-ax2.set_xlabel('data')
-ax2.set_ylabel('amplitude')
+fig, bits_r = plt.subplots()
+bits_r.stem(range(len(Rx_data)), Rx_data,use_line_collection=True)
+bits_r.grid()
+bits_r.set_xlabel('data')
+bits_r.set_ylabel('amplitude')
 plt.title('Information after Receiveing')
 plt.figure(7)
 
