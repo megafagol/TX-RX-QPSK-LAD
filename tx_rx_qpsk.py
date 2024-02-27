@@ -167,14 +167,14 @@ plt.figure(3)
 
 # Arreglo con los valores de energía de la señal SUMANDO el ruido 
 # (se considera la mitad del espectro ya que se espejan los valores)
-arreglo1 = fourier_signal_whit_noise[:var_len_input]**2
+energy_of_signal_r = fourier_signal_whit_noise[:var_len_input]**2
 
 # Creamos un arreglo de tuplas. En el primer valor cada tupla tendrá el valor de la energia de la señal, 
 # en el segundo valor tendrá el indice en el espectro de frecuencia al que corresponde ese valor de energia.
-index = np.arange(0, len(arreglo1))
+index = np.arange(0, len(energy_of_signal_r))
 arreglofinal = []
-for i in range(0,len(arreglo1)):
-  arreglofinal.append((arreglo1[i],index[i]))
+for i in range(0,len(energy_of_signal_r)):
+  arreglofinal.append((energy_of_signal_r[i],index[i]))
 
 # Ordenamos las muestras de manera creciente según su energia.
 sorted_array = sorted(arreglofinal, key=lambda x: x[0])
@@ -282,8 +282,8 @@ print(tl)
 
 fig, energy_s_t = plt.subplots()
 energy_s_t.plot(index, [x[0] for x in sorted_array])
-energy_s_t.axhline(y=tu, color='red', linestyle='--',linewidth=0.5)
-energy_s_t.axhline(y=tl, color='green', linestyle='--',linewidth=0.5)
+energy_s_t.axhline(y=tu, color='green', linestyle='--',linewidth=0.5)
+energy_s_t.axhline(y=tl, color='red', linestyle='--',linewidth=0.5)
 energy_s_t.set_yscale('log')
 energy_s_t.set_xlabel('Espectro ordenado de manera creciente', fontsize='8')
 energy_s_t.set_ylabel('Energia de la señal recibida', fontsize='14')
@@ -315,6 +315,16 @@ plt.figure(6)
 
 print('Cantidad de puntos rojos: ')
 print(len(index_final_with_signal))
+
+
+fig, fft_r_lad_t = plt.subplots()
+fft_r_lad_t.plot(F, energy_of_signal_r)
+fft_r_lad_t.axhline(y=tu, color='green', linestyle='--',linewidth=0.5)
+fft_r_lad_t.axhline(y=tl, color='red', linestyle='--',linewidth=0.5)
+fft_r_lad_t.set_xlabel('Frecuencia (Hz)', fontsize='14')
+fft_r_lad_t.set_ylabel('Amplitud FFT', fontsize='14')
+plt.title('Energia de la señal recibida con umbrales del LAD')
+plt.figure(7)
 
 
 #  XXXXXXXXXXXXXXXXXXXXXXXXXXXX QPSK demodulation XXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -373,7 +383,7 @@ bits_r.grid()
 bits_r.set_xlabel('data')
 bits_r.set_ylabel('amplitude')
 plt.title('Information after Receiveing')
-plt.figure(7)
+plt.figure(8)
 
 print('bit error probabilty is (BER): ')
 print(cnt/(int(len(Rx_data))))
