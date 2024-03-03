@@ -329,6 +329,8 @@ cluster_aux = []
 
 flag_saving_cluster = False
 
+flag_saving_cluster_first_element = True
+
 flag_cluster_signal = False
 
 clusters_list = []
@@ -339,12 +341,18 @@ for i in range(0,len(arreglofinal)):
    
    if arreglofinal[i][0] >= tl:
         flag_saving_cluster = True
+        if (flag_saving_cluster_first_element == True):
+           if(0 < i):
+              cluster_aux.append(arreglofinal[i-1])
+           flag_saving_cluster_first_element = False
         cluster_aux.append(arreglofinal[i])
         if arreglofinal[i][0] >= tu:
            flag_cluster_signal = True
         
    if((arreglofinal[i][0] < tl and flag_saving_cluster == True) or (i == (len(arreglofinal)-1) and flag_saving_cluster == True)):
       flag_saving_cluster = False
+      flag_saving_cluster_first_element = True
+      cluster_aux.append(arreglofinal[i])
       clusters_list.append(cluster_aux)
       if flag_cluster_signal == True:
          clusters_list_signal.append(cluster_aux)
@@ -386,7 +394,11 @@ for i in range(1,len(clusters_list_signal)):
 
    if((sample_id_first_sample_current_cluster - sample_id_last_sample_last_signal) <= num_samples):
       
-      for j in range(0,len(signal_aux)):
+      index_start_signal_aux = 0
+      if((sample_id_first_sample_current_cluster - sample_id_last_sample_last_signal) == 0):
+         index_start_signal_aux = 1
+
+      for j in range(index_start_signal_aux,len(signal_aux)):
          signal_list[index_last_signal].append(signal_aux[j])
       
    else:
