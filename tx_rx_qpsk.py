@@ -3,9 +3,46 @@ import matplotlib.pyplot as plt
 import scipy.fftpack as fourier
 import statistics as st
 
+# --/DEFINICION DE VARIABLES/--
+
+# Cantidad de bits a transmitir
+cant_bits_t = 50
+
+# Cantidad de bits que se transmiten por unidad de tiempo (en este caso Segundos CREO)
+br = 1000000
+
+# Frecuencia de la portadora mínima. 
+f=br*10
+
+# Representa la duración de un bit
+T=1/br
+
+# Cantidad de valores de las abscisas para un simbolo
+num_absc = 99
+
+# Valor para la raiz cuadrada en la generacion del ruido
+sqrt_noise = 0.7
+
+# LAD
+
+# En principio la elección de la pfa dependerá de que tan seguro quieras que sea la deteccion o decisión de 
+# presencia o no de la señal. Si tomas uno muy chico, termina optando por menos valores pero no le vas a errar.
+# Tomar una PFA lo suficientemente grande para que no pierdas señal pero lo suficientemente chico para no tomar ruido como señal
+pfa1 = 0.0001
+pfa2 = 0.001
+
+# Porcentaje de elementos para comenzar algoritmo LAD
+percent_elements = 0.01
+
+# Numero de muestras de distancia entre dos clusters para considerar que los mismos consisten en la misma señal
+num_samples = 2
+
+# --/DESARROLLO DEL ALGORITMO/--
+
+
 # Genero 50 numeros utilizando una distribución normal estándar (media cero y varianza uno)
 # Estos van a ser los 50 bits que se van a tener a la entrada del transmisor y que debe transmitir
-data = np.random.normal(0, 1, 50)
+data = np.random.normal(0, 1, cant_bits_t)
 for i in range(len(data)):
     if data[i] <= 0:
         data[i] = 0
@@ -41,19 +78,11 @@ for i in range(int(len(data)/2)):
         s_p_data[j][i] = data_NRZ[indexData]
         indexData += 1
 
-# Cantidad de bits que se transmiten por unidad de tiempo (en este caso Segundos CREO)
-br = 1000000
-
-# Frecuencia de la portadora mínima. 
-f=br*10
-
-# Representa la duración de un bit
-T=1/br
 
 # Crea un vector de 1 fila y 99 columnas con valores equiespaciados entre 0 y
 # T (en este caso T = 1.0000e-06)
 # Que representa los valores de las abscisas para un simbolo
-t = np.arange(T/99, T + T/99, T/99)
+t = np.arange(T/num_absc, T + T/num_absc, T/num_absc)
 
 #  XXXXXXXXXXXXXXXXXXXXXXX QPSK modulation  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 y=np.array([])
@@ -82,7 +111,7 @@ for i in range(int(len(data)/2)):
     #Originalmente era np.sqrt(0.1)
     #Con np.sqrt(15) se tiene un BER de 0.08 aproximadamente
 
-    noise = (np.sqrt(0.7) * (np.random.normal(0, 1, 99) + np.random.normal(0, 1, 99)))
+    noise = (np.sqrt(sqrt_noise) * (np.random.normal(0, 1, num_absc) + np.random.normal(0, 1, num_absc)))
 
     y_noise = np.concatenate([y_noise, noise])
 
@@ -94,7 +123,7 @@ Tx_sig=y
 
 # Crea un vector de 1 fila y 2475 columnas con valores equiespaciados
 # Que representa los valores de las abscisas para toda la señal a transmitir
-tt = np.arange(T/99, (T*len(data))/2 + T/99, T/99)
+tt = np.arange(T/num_absc, (T*len(data))/2 + T/num_absc, T/num_absc)
 
 
 fig, wave_t = plt.subplots(4, 1, figsize=(10, 8))
@@ -137,10 +166,10 @@ final_signal_with_noise = Tx_sig
 # Señal final a transmitir SOLO ruido
 # final_signal_with_noise = y_noise
 
-# Este valor es la mitad de 2475, donde 2475 corresponde al intervalo de abscisas 
-# de la señal a transmitir
+# Este valor es la mitad de 2475, es decir 1237.5 pero lo redondeo a 1238
+# donde 2475 corresponde al intervalo de abscisas de la señal a transmitir
 # Se considera la mitad ya que cuando se analiza el espectro los valores se espejan
-var_len_input = 1238
+var_len_input = round(len(tt)/2)
 
 
 
@@ -188,17 +217,12 @@ plt.title('Energia ordenada de manera creciente')
 plt.figure(4)
 
 # Inicio de las iteraciones para encontrar umbrales
-# En principio la elección de la pfa dependerá de que tan seguro quieras que sea la deteccion o decisión de 
-# presencia o no de la señal. Si tomas uno muy chico, termina optando por menos valores pero no le vas a errar.
-# Tomar una PFA lo suficientemente grande para que no pierdas señal pero lo suficientemente chico para no tomar ruido como señal
-pfa1 = 0.0001
-pfa2 = 0.001
 
 Tcme1 = -np.log(pfa1)
 Tcme2 = -np.log(pfa2)
 
 flag = 1
-clean_set=sorted_array[0:round((0.01*len(sorted_array)))]
+clean_set=sorted_array[0:round((percent_elements*len(sorted_array)))]
 # Toma el 1% de los elementos partiendo desde el extremo de menor energia
 # En este caso serian 12 elementos, ya que toma los valores de los indices del 0:11 (con el 11 incluido)
 tu = Tcme1*st.mean([x[0] for x in clean_set])
@@ -245,7 +269,7 @@ while(flag):
 
 
 flag = 1
-clean_set = sorted_array[0:round((0.01*len(sorted_array)))]
+clean_set = sorted_array[0:round((percent_elements*len(sorted_array)))]
 tl = Tcme2*st.mean([x[0] for x in clean_set])
 tl_old = 0
 
@@ -291,6 +315,103 @@ plt.title('Energia ordenada de manera creciente con umbrales')
 plt.figure(5)
 
 
+fig, fft_r_lad_t = plt.subplots()
+fft_r_lad_t.plot(F, energy_of_signal_r)
+fft_r_lad_t.axhline(y=tu, color='green', linestyle='--',linewidth=0.5)
+fft_r_lad_t.axhline(y=tl, color='red', linestyle='--',linewidth=0.5)
+fft_r_lad_t.set_xlabel('Frecuencia (Hz)', fontsize='14')
+fft_r_lad_t.set_ylabel('Energia de la señal recibida', fontsize='14')
+plt.title('Energia de la señal recibida con umbrales del LAD')
+plt.figure(6)
+
+
+cluster_aux = []
+
+flag_saving_cluster = False
+
+flag_cluster_signal = False
+
+clusters_list = []
+
+clusters_list_signal = []
+
+for i in range(0,len(arreglofinal)):
+   
+   if arreglofinal[i][0] >= tl:
+        flag_saving_cluster = True
+        cluster_aux.append(arreglofinal[i])
+        if arreglofinal[i][0] >= tu:
+           flag_cluster_signal = True
+        
+   if((arreglofinal[i][0] < tl and flag_saving_cluster == True) or (i == (len(arreglofinal)-1) and flag_saving_cluster == True)):
+      flag_saving_cluster = False
+      clusters_list.append(cluster_aux)
+      if flag_cluster_signal == True:
+         clusters_list_signal.append(cluster_aux)
+      flag_cluster_signal = False
+      cluster_aux = []
+
+# BORRAR    
+print(clusters_list)
+
+# BORRAR
+print(clusters_list_signal)
+
+signal_aux = []
+
+signal_list = []
+
+# Tomo el primer cluster y lo agrego como la primer señal
+
+for i in range(0,len(clusters_list_signal[0])):
+   signal_aux.append(clusters_list_signal[0][i])
+
+signal_list.append(signal_aux)
+
+signal_aux = []
+
+# Luego empiezo a comparar la ultima señal agregada a signal_list con los clusters siguientes 
+# Por eso comienza en 1
+
+for i in range(1,len(clusters_list_signal)):
+   
+   index_last_signal = len(signal_list)-1
+   index_last_sample_last_signal = len(signal_list[index_last_signal])-1
+   sample_id_last_sample_last_signal = signal_list[index_last_signal][index_last_sample_last_signal][1]
+
+   sample_id_first_sample_current_cluster = clusters_list_signal[i][0][1]
+
+   for j in range(0,len(clusters_list_signal[i])):
+      signal_aux.append(clusters_list_signal[i][j])
+
+   if((sample_id_first_sample_current_cluster - sample_id_last_sample_last_signal) <= num_samples):
+      
+      for j in range(0,len(signal_aux)):
+         signal_list[index_last_signal].append(signal_aux[j])
+      
+   else:
+      
+      signal_list.append(signal_aux)
+      
+   signal_aux = []
+
+
+# BORRAR
+print(signal_list)
+      
+
+fig, signals_by_lad = plt.subplots()
+signals_by_lad.plot(F, energy_of_signal_r)
+for i in range(0,len(signal_list)):
+    signals_by_lad.plot([x[1] for x in signal_list[i]], [y[0] for y in signal_list[i]])
+signals_by_lad.axhline(y=tu, color='green', linestyle='--',linewidth=0.5)
+signals_by_lad.axhline(y=tl, color='red', linestyle='--',linewidth=0.5)
+signals_by_lad.set_xlabel('Frecuencia (Hz)', fontsize='14')
+signals_by_lad.set_ylabel('Energia de la señal recibida', fontsize='14')
+plt.title('Señales identificadas mediante metodo LAD')
+plt.figure(7)
+
+
 
 # Del arreglo de muestras ordenado de manera creciente segun su energía, solo consideramos
 # aquellos cuya energía es mayor al umbral inferior
@@ -311,20 +432,12 @@ for index in range(0,len(index_final_with_signal)):
 fft_r_lad.set_xlabel('Frecuencia (Hz)', fontsize='14')
 fft_r_lad.set_ylabel('Amplitud FFT', fontsize='14')
 plt.title('Transformada de Fourier de la señal recibida mas metodo LAD')
-plt.figure(6)
+plt.figure(8)
 
 print('Cantidad de puntos rojos: ')
 print(len(index_final_with_signal))
 
 
-fig, fft_r_lad_t = plt.subplots()
-fft_r_lad_t.plot(F, energy_of_signal_r)
-fft_r_lad_t.axhline(y=tu, color='green', linestyle='--',linewidth=0.5)
-fft_r_lad_t.axhline(y=tl, color='red', linestyle='--',linewidth=0.5)
-fft_r_lad_t.set_xlabel('Frecuencia (Hz)', fontsize='14')
-fft_r_lad_t.set_ylabel('Amplitud FFT', fontsize='14')
-plt.title('Energia de la señal recibida con umbrales del LAD')
-plt.figure(7)
 
 
 #  XXXXXXXXXXXXXXXXXXXXXXXXXXXX QPSK demodulation XXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -333,14 +446,14 @@ Rx_data = np.array([])
 # Señal recibida
 Rx_sig = final_signal_with_noise
 
-for i in range(0, len(Rx_sig), 99):
+for i in range(0, len(Rx_sig), num_absc):
     # XXXXXX inphase coherent dector XXXXXXX
     # Es un algoritmo que lo que hace es que para cada iteracion va tomando 
     # los 99 elementos siguientes de la señal recibida Rx_sig, esto para 
     # obtener los valores de cada uno de los simbolos lo cual lo hace 
     # a medida que van pasando cada una de las iteraciones
     # Luego multiplica por el cos
-    Z_in_aux = Rx_sig[i:i + 99]
+    Z_in_aux = Rx_sig[i:i + num_absc]
 
     Z_in = Z_in_aux*np.cos(2*np.pi*f*t)
     # Hace la sumatoria de los valores del simbolo multiplicado
@@ -354,7 +467,7 @@ for i in range(0, len(Rx_sig), 99):
 
     # XXXXXX Quadrature coherent dector XXXXXX
     # Lo mismo que el anterior pero multiplica por el sen
-    Z_qd = Rx_sig[i:i + 99]*np.sin(2*np.pi*f*t)
+    Z_qd = Rx_sig[i:i + num_absc]*np.sin(2*np.pi*f*t)
 
     # Lo mismo que el anterior
     Z_qd_intg = (np.trapz(Z_qd, t))*(2/T)
@@ -383,7 +496,7 @@ bits_r.grid()
 bits_r.set_xlabel('data')
 bits_r.set_ylabel('amplitude')
 plt.title('Information after Receiveing')
-plt.figure(8)
+plt.figure(9)
 
 print('bit error probabilty is (BER): ')
 print(cnt/(int(len(Rx_data))))
