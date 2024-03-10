@@ -9,25 +9,33 @@ from numpy import cos, absolute
 
 # --/DEFINICION DE VARIABLES/--
 
-# Cantidad de bits a transmitir
-cant_bits_t = 50
+# FM
 
-# Cantidad de bits que se transmiten por unidad de tiempo (en este caso Segundos CREO)
-br = 1000000
+# Muestras por segundo que se van a tomar de la señal analogica
+fs = 8000 # Sampling Frequency [Muestras/Seg] se podria decir tambien [Hz]
 
-# Frecuencia de la portadora mínima. 
-f=br*10
+# Cantidad de segundos que se van a muestrear
+sampling_sec = 1
 
-# Representa la duración de un bit
-T=1/br
+# Parametros Modulante 1
+fm = 5 # Message Frequency [Hz]
+Am = 1 # Message Amplitude [Volt]
 
-# Cantidad de valores de las abscisas para un simbolo
-num_absc = 99
+# Parametros Modulante 2
+fm_2 = 5 # Message Frequency [Hz]
+Am_2 = 1 # Message Amplitude [Volt]
 
-# Valor para la raiz cuadrada en la generacion del ruido
-sqrt_noise = 0.7
+# Parametros Portadora 1
+fc = 200 # Carrier Frequency [Hz]
+Ac = 1 # Carrier Amplitude [Volt]
 
-# Ventana de frecuencias a ver
+# Parametros Portadora 2
+fc_2 = 400 # Carrier Frequency [Hz]
+Ac_2 = 1 # Carrier Amplitude [Volt]
+
+kf = 100*pi # Modulation Coefficient [Rad/(Volt*Seg)]
+
+# Ventana de frecuencias a ver cuando se grafica la Transformada de Fourier
 cota_inferior_frec = 0
 
 cota_superior_frec = 600
@@ -48,34 +56,13 @@ num_samples = 10
 
 # --/DESARROLLO DEL ALGORITMO/--
 
-
 # --/FM Signal/--
 
-# Muestras por segundo que se van a tomar de la señal analogica
-fs = 8000 # Sampling Frequency [Muestras/Seg]
-
-# Parametros Modulante 1
-fm = 5 # Message Frequency
-Am = 1 # Message Amplitude
-
-# Parametros Modulante 2
-fm_2 = 5 # Message Frequency
-Am_2 = 1 # Message Amplitude
-
-# Parametros Portadora 1
-fc = 200 # Carrier Frequency
-Ac = 1 # Carrier Amplitude
-
-# Parametros Portadora 2
-fc_2 = 400 # Carrier Frequency
-Ac_2 = 1 # Carrier Amplitude
-
-kf = 100*pi # Modulation Coefficient [Rad/Volt*Seg]
-
-
 # 8000 valores equiespaciados por 0.000125
-tt = np.arange(0,1,1/fs)
-
+# Crea un vector de 1 fila y 8000 columnas con valores equiespaciados (0.000125)
+# Que representa los valores de las abscisas de las señales, es decir, el tiempo
+tt = np.arange(0,sampling_sec,1/fs)
+# tt = np.linspace(0,sampling_sec,fs*sampling_sec)
 
 # Señal Modulante 1
 M = Am*cos(2*pi*fm*tt) # Message Signal
@@ -118,53 +105,52 @@ s_FM_noise = s_FM + noise
 
 # --/FM Signal/--
 
-# Crea un vector de 1 fila y 2475 columnas con valores equiespaciados
-# Que representa los valores de las abscisas para toda la señal a transmitir
-# tt = np.arange(T/num_absc, (T*len(data))/2 + T/num_absc, T/num_absc)
-
-
-fig, wave_t = plt.subplots(4, 1, figsize=(10, 8))
-# Subtrama 1: Señal de Inphase component
+fig, wave_t = plt.subplots(5, 1, figsize=(10, 8))
+# Subtrama 1: Señal Modulante 1
 wave_t[0].plot(tt, M)
-wave_t[0].set_title('Señal Modulante')
+wave_t[0].set_title('Señal Modulante 1')
 wave_t[0].set_xlabel('time(sec)')
 wave_t[0].set_ylabel('amplitude(volt0)')
 wave_t[0].grid(True)
 
-# Subtrama 2: Señal de Quadrature component
-wave_t[1].plot(tt, s_FM)
-wave_t[1].set_title('Señal a transmitir SIN ruido. Contiene las portadoras moduladas')
+# Subtrama 2: Señal Portadora 1
+wave_t[1].plot(tt, C)
+wave_t[1].set_title('Señal Portadora 1')
 wave_t[1].set_xlabel('time(sec)')
 wave_t[1].set_ylabel('amplitude(volt0)')
 wave_t[1].grid(True)
 
-# Subtrama 3: Señal de ruido
-wave_t[2].plot(tt, noise)
-wave_t[2].set_title('Ruido')
+# Subtrama 3: Señal a transmitir SIN ruido. Contiene las portadoras moduladas
+wave_t[2].plot(tt, s_FM)
+wave_t[2].set_title('Señal a transmitir SIN ruido. Contiene las portadoras moduladas')
 wave_t[2].set_xlabel('time(sec)')
 wave_t[2].set_ylabel('amplitude(volt0)')
 wave_t[2].grid(True)
 
-# Subtrama 4: Señal final a transmitir
-wave_t[3].plot(tt, s_FM_noise, color='red')
-wave_t[3].set_title('Señal a transmitir CON ruido. Portadoras moduladas')
+# Subtrama 4: Señal de ruido
+wave_t[3].plot(tt, noise)
+wave_t[3].set_title('Ruido')
 wave_t[3].set_xlabel('time(sec)')
 wave_t[3].set_ylabel('amplitude(volt0)')
 wave_t[3].grid(True)
+
+# Subtrama 5: Señal a transmitir CON ruido. Portadoras modulada
+wave_t[4].plot(tt, s_FM_noise, color='red')
+wave_t[4].set_title('Señal a transmitir CON ruido. Portadoras moduladas')
+wave_t[4].set_xlabel('time(sec)')
+wave_t[4].set_ylabel('amplitude(volt0)')
+wave_t[4].grid(True)
 
 # Ajustar diseño
 plt.tight_layout()
 plt.figure(1)
 
-# Señal a transmitir luego de la modulacion
-Tx_sig=s_FM_noise
-
-# Señal final a transmitir Simbolos + Ruido
-final_signal_with_noise = Tx_sig
+# Señal final a transmitir: Portadoras moduladas + Ruido
+final_signal_with_noise = s_FM_noise
 
 # SOLO PARA TESTEAR
 # Señal final a transmitir SOLO ruido
-# final_signal_with_noise = y_noise
+# final_signal_with_noise = noise
 
 # Este valor es la mitad de 2475, es decir 1237.5 pero lo redondeo a 1238
 # donde 2475 corresponde al intervalo de abscisas de la señal a transmitir
@@ -178,9 +164,8 @@ final_signal_with_noise = Tx_sig
 
 # --/Espectro FM Signal/--
 
-f_fm = np.linspace(-fs/2, fs/2, len(final_signal_with_noise)) # Frequency Grid
 
-f_fm_half = np.linspace(0, fs/2, round(len(final_signal_with_noise)/2))
+# --/Pruebas/--
 
 M_f = fftshift(absolute(fft(M)))
 
@@ -188,22 +173,30 @@ C_f = fftshift(absolute(fft(C)))
 
 S_FM_f = fftshift(absolute(fft(s_FM)))
 
-S_FM_noise_f = fftshift(absolute(fft(s_FM_noise)))
+# --/Pruebas/--
 
-# Señal recibida a la cual se le hizo transformada de fourier
-# Y se reorganiza los componentes de frecuencia para que el 
+# Señal recibida a la cual se le hace la Transformada de Fourier (fft)
+# Y se reorganiza los componentes de frecuencia (fftshift) para que el 
 # espectro esté centrado en cero.
-signal_R_f = S_FM_noise_f
+signal_R_f = fftshift(absolute(fft(final_signal_with_noise)))
 
-signal_R_f_half = S_FM_noise_f[round((fs/2)):]
+# Luego de realizar la Transformada de Fourier tengo en cuenta
+# la mitad de los elementos ya que se espejan los valores de frecuencia
+# signal_R_f_half = S_FM_noise_f[round((fs/2)):]
+signal_R_f_half = signal_R_f[round(len(signal_R_f)/2):]
+
+f_fm_half = np.linspace(0, fs/2, round(len(final_signal_with_noise)/2))
+
+
+# f_fm = np.linspace(-fs/2, fs/2, len(final_signal_with_noise)) # Frequency Grid
 
 #--/Calculo ancho de banda/--
-beta = (kf*Am/(2*pi))/fm
-BW = 2*fm*(beta+1)
-BW_bound = np.zeros(len(f_fm))
-for i in range(len(f_fm)):
-    if(abs(f_fm[i])<(fc + BW/2) and abs(f_fm[i])>(fc - BW/2)):
-        BW_bound[i] = 1
+# beta = (kf*Am/(2*pi))/fm
+# BW = 2*fm*(beta+1)
+# BW_bound = np.zeros(len(f_fm))
+# for i in range(len(f_fm)):
+#     if(abs(f_fm[i])<(fc + BW/2) and abs(f_fm[i])>(fc - BW/2)):
+#         BW_bound[i] = 1
 #--/Calculo ancho de banda/--
         
 # --/Pruebas/--
@@ -492,7 +485,7 @@ max_fft_value = 0
 
 # Para completar el arraglo signal_list_f, tomo de cada una de las señales,
 # el valor de energia le hago la raiz cuadrada (sqrt) y de esta forma
-# pasan a ser los valor que se obtuvieron con la Transformada de Fourirer
+# pasan a ser los valores que se obtuvieron con la Transformada de Fourier
 for i in range(0,len(signal_list)):
    aux_signal = []
    
