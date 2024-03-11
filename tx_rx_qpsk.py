@@ -6,6 +6,8 @@ from numpy.fft import fft, fftshift
 from scipy.integrate import simps
 from math import pi
 from numpy import cos, absolute
+from glob import glob
+import librosa
 
 # --/DEFINICION DE VARIABLES/--
 
@@ -15,7 +17,7 @@ from numpy import cos, absolute
 fs = 8000 # Sampling Frequency [Muestras/Seg] se podria decir tambien [Hz]
 
 # Cantidad de segundos que se van a muestrear
-sampling_sec = 1
+# sampling_sec = 1
 
 # Parametros Modulante 1
 fm = 5 # Message Frequency [Hz]
@@ -30,7 +32,7 @@ fc = 200 # Carrier Frequency [Hz]
 Ac = 1 # Carrier Amplitude [Volt]
 
 # Parametros Portadora 2
-fc_2 = 400 # Carrier Frequency [Hz]
+fc_2 = 900 # Carrier Frequency [Hz]
 Ac_2 = 1 # Carrier Amplitude [Volt]
 
 kf = 100*pi # Modulation Coefficient [Rad/(Volt*Seg)]
@@ -38,7 +40,7 @@ kf = 100*pi # Modulation Coefficient [Rad/(Volt*Seg)]
 # Ventana de frecuencias a ver cuando se grafica la Transformada de Fourier
 cota_inferior_frec = 0
 
-cota_superior_frec = 600
+cota_superior_frec = 1100
 
 # LAD
 
@@ -58,14 +60,20 @@ num_samples = 10
 
 # --/FM Signal/--
 
+audio_files = glob('./*.wav')
+
+M_aud, sr_aud = librosa.load(audio_files[0], sr=fs)
+
 # 8000 valores equiespaciados por 0.000125
 # Crea un vector de 1 fila y 8000 columnas con valores equiespaciados (0.000125)
 # Que representa los valores de las abscisas de las señales, es decir, el tiempo
-tt = np.arange(0,sampling_sec,1/fs)
+# tt = np.arange(0,sampling_sec,1/fs)
 # tt = np.linspace(0,sampling_sec,fs*sampling_sec)
+tt = np.linspace(0,len(M_aud)/sr_aud,len(M_aud))
 
 # Señal Modulante 1
-M = Am*cos(2*pi*fm*tt) # Message Signal
+# M = Am*cos(2*pi*fm*tt) # Message Signal
+M = M_aud
 
 # Señal Modulante 1
 M_2 = Am_2*cos(2*pi*fm_2*tt) # Message Signal
@@ -102,6 +110,7 @@ noise = (np.sqrt(0.7) * (np.random.normal(0, 1, len(s_FM)) + np.random.normal(0,
 # Señal a transmitir CON ruido
 s_FM_noise =[]
 s_FM_noise = s_FM + noise
+# s_FM_noise = s_FM
 
 # --/FM Signal/--
 
@@ -169,6 +178,8 @@ final_signal_with_noise = s_FM_noise
 
 M_f = fftshift(absolute(fft(M)))
 
+M_f_half = M_f[round(len(M_f)/2):]
+
 C_f = fftshift(absolute(fft(C)))
 
 S_FM_f = fftshift(absolute(fft(s_FM)))
@@ -228,6 +239,7 @@ fig, fft_r = plt.subplots()
 # Dividimos por el mayor valor de la señal recibida para nomralizar CREO
 # fft_r.plot(f_fm, signal_R_f/signal_R_f.max())
 fft_r.plot(f_fm_half, signal_R_f_half/signal_R_f_half.max())
+# fft_r.plot(f_fm_half, M_f_half/M_f_half.max())
 # fft_r.set_xlabel('Frecuencia (Hz)[Señal con ruido]', fontsize='14')
 # fft_r.set_ylabel('Amplitud FFT ', fontsize='14')
 fft_r.set(xlabel = 'Frequency (Hz)', ylabel = 'Normalized |S_{FM}(f)|', xlim = (cota_inferior_frec,cota_superior_frec))
